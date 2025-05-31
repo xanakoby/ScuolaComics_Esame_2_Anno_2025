@@ -23,8 +23,14 @@ public class TurretController : MonoBehaviour, ISpawnable
     [SerializeField] Transform firePoint;
     [SerializeField] GameObject projectilePrefab;
 
+    [SerializeField] BaseProjectile bulletPrefab;
+
     ObjectPooler<BaseProjectile> projectilesPooler;
 
+    private void Awake()
+    {
+        projectilesPooler = new ObjectPooler<BaseProjectile>(bulletPrefab);
+    }
     private void Update()
     {
         fireCooldown -= Time.deltaTime;
@@ -59,31 +65,24 @@ public class TurretController : MonoBehaviour, ISpawnable
         if (projectilePrefab == null || firePoint == null)
             return;
 
-        GameObject proj = Instantiate(projectilePrefab, firePoint.position, firePoint.rotation);
+        //GameObject proj = Instantiate(projectilePrefab, firePoint.position, firePoint.rotation);
 
         // TODO: Bisogna gestire la distruzione del proiettile in modo intelligente ed estendibile
         // si potrebbe usare una callback onDestroyProjectile ??
 
-        //da pensarci
-        /*
-        BulletTest spawnedBullet = itemPooler.Get();
-
-        if (!spawnedBullet.gameObject.activeSelf)
+        BaseProjectile baseProjectile = projectilesPooler.Get();
+        if (!baseProjectile.gameObject.activeSelf)
         {
-            spawnedBullet.gameObject.SetActive(true);
+            baseProjectile.gameObject.SetActive(true);
         }
         else
         {
-            spawnedBullet.onCollisionEnter += () =>
+            baseProjectile.damager.onTriggerEnter += () =>
             {
-                itemPooler.Set(spawnedBullet);
+                projectilesPooler.Set(baseProjectile);
             };
         }
-
-        //qui è dove setto l'oggetto dall'object pool a 0 con le cose di base
-        spawnedBullet.transform.SetPositionAndRotation(spawnTransform.position, Quaternion.identity);
-        spawnedBullet.rb.velocity = Vector3.zero;
-        */
+        baseProjectile.transform.SetPositionAndRotation(firePoint.position, firePoint.rotation);
     }
 
     public void TurretSelected()
@@ -92,7 +91,7 @@ public class TurretController : MonoBehaviour, ISpawnable
         cannonRangeGraphics.transform.localScale = new Vector2(range, range) * 2;
         cannonRangeGraphics.gameObject.SetActive(true);
 
-        Publisher.Publish(new TurretInfoMessage(fireRate, cost));
+        Publisher.Publish(new TurretInfoMessage(fireRate, cost, bulletPrefab.damager.damageAmount));
     }
     public void TurretDeselected()
     {
@@ -121,7 +120,6 @@ public class TurretController : MonoBehaviour, ISpawnable
     }
     public void SellTurret()
     {
-        Debug.Log("venduto1");
         GameManager.Instance.AddCoins(cost);
         //e faccio il set dell'object pooler e lo setto false
         onDestroyTrigger?.Invoke();

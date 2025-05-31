@@ -14,6 +14,18 @@ public class GameManager : Singleton<GameManager>
     public Transform enemySpawnTransform;
     public Path enemyPath;
 
+    [Header("Entities Variants")]
+    public EnemyCapsule enemy1;
+    public EnemyCapsule enemy2;
+    public EnemyCapsule enemy3;
+
+    public int enemyCount = 0;
+    public bool allEnemyKilled;
+
+    public TurretCapsule turret1;
+    public TurretCapsule turret2;
+    public TurretCapsule turret3;
+
     public int CurrentCoins => currentCoins;
 
     public override void Awake()
@@ -54,6 +66,17 @@ public class GameManager : Singleton<GameManager>
     {
         entitiesFactory.Create(_enemyCapsule, enemySpawnTransform.position, Quaternion.identity);
     }
+    public void RemoveCountEnemy()
+    {
+        enemyCount--;
+        if(enemyCount <= 0)
+        {
+            enemyCount = 0;
+            allEnemyKilled = true;
+
+            Debug.Log("cambio scena");
+        }
+    }
     public void SpawnTurret(TurretCapsule _turretCapsule, Vector3 _position, Quaternion _rotation)
     {
         entitiesFactory.Create(_turretCapsule, _position, _rotation);
@@ -65,7 +88,7 @@ public class GameManager : Singleton<GameManager>
 
     public void SellCurrentTurret()
     {
-        Debug.Log("venduto5");
+        UIManager.Instance.UnshowTurretStats();
         Publisher.Publish(new SellTurretMessage());
     }
 }

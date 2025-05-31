@@ -14,6 +14,7 @@ public class UIManager : Singleton<UIManager>, ISubscriber
     [Header("Turret Panel")]
     [SerializeField] GameObject turretPanel;
     [SerializeField] TextMeshProUGUI turretInfo;
+    public Button startGame;
     [SerializeField] Button upgradeTurret;
     [SerializeField] Button sellTurret;
 
@@ -73,7 +74,7 @@ public class UIManager : Singleton<UIManager>, ISubscriber
 
             turretInfo.text = 
                 "Costo: " + _turretInfoMessage.cost.ToString() + "\n" +
-                "Danno: " +  "\n" +
+                "Danno: " + _turretInfoMessage.bulletsDamage.ToString() + "\n" +
                 "Fire Rate: " + _turretInfoMessage.fireRate.ToString() + "\n"+ 
                 "Livello Upgrade: "
                 ;

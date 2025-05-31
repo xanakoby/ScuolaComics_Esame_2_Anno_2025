@@ -183,8 +183,8 @@ public class TowerGridManager : MonoBehaviour, ISubscriber
             Vector3 spawnPos = transform.position + new Vector3(cell.x * cellSize + cellSize / 2f, cell.y * cellSize + cellSize / 2f);
 
             //tolgo instantiate e piazzo la torre col pooler
-            //GameManager.Instance.SpawnTurret(selectedTurretButton.turretPrefab, spawnPos, Quaternion.identity);
-            Instantiate(selectedTurretButton.TurretPrefab, spawnPos, Quaternion.identity, towerParent);
+            GameManager.Instance.SpawnTurret(selectedTurretButton.turretPrefab, spawnPos, Quaternion.identity);
+            //Instantiate(selectedTurretButton.TurretPrefab, spawnPos, Quaternion.identity, towerParent);
 
             grid[cell.x, cell.y] = CellType.Tower;
         }

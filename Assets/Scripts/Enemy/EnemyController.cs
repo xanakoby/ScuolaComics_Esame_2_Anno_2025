@@ -14,6 +14,7 @@ public class EnemyController : MonoBehaviour, ISpawnable
     private int currentPointIndex = 0;
 
     [Header("Movement")]
+    Rigidbody2D rb;
     [SerializeField] float speed = 2f;
 
     [Header("Health")]
@@ -35,6 +36,8 @@ public class EnemyController : MonoBehaviour, ISpawnable
 
     private void Start()
     {
+        rb = GetComponent<Rigidbody2D>();
+
         currentHealth = maxHealth;
     }
 
@@ -50,7 +53,8 @@ public class EnemyController : MonoBehaviour, ISpawnable
         Vector3 targetPoint = pathPoints[currentPointIndex].position;
         Vector3 direction = (targetPoint - transform.position).normalized;
 
-        transform.position += direction * speed * Time.deltaTime;
+        //transform.position += direction * speed * Time.deltaTime;
+        rb.linearVelocity = direction * speed;
 
         UpdateGraphicsRotation(direction);
 
@@ -128,6 +132,9 @@ public class EnemyController : MonoBehaviour, ISpawnable
     {
         // TODO: Si potrebbe fare di meglio? Come possiamo non eliminare l'oggetto e usarlo in un altro modo?
         //Destroy(gameObject);
+
+        GameManager.Instance.RemoveCountEnemy();
+
         onDestroyTrigger?.Invoke();
         gameObject.SetActive(false);
     }
