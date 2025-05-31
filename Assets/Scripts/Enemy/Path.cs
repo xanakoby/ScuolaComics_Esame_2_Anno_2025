@@ -1,9 +1,11 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [ExecuteInEditMode]
 public class Path : MonoBehaviour
 {
     public Color lineColor = Color.yellow;
+    public List<Transform> pathPoints;
 
     private void OnDrawGizmos()
     {

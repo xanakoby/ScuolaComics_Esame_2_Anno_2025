@@ -1,9 +1,14 @@
+using NUnit.Framework.Interfaces;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class EnemyController : MonoBehaviour
+public class EnemyController : MonoBehaviour, ISpawnable
 {
+    public delegate void OnDestroy();
+    public OnDestroy onDestroyTrigger;
+    protected EnemyCapsule enemyData;
+
     [Header("Path")]
     [SerializeField] List<Transform> pathPoints;
     private int currentPointIndex = 0;
@@ -22,6 +27,9 @@ public class EnemyController : MonoBehaviour
 
     [Header("Graphics")]
     [SerializeField] SpriteRenderer graphicsObject;
+
+    [Header("Value")]
+    [SerializeField] int valueCoin;
 
     // TODO: Modificare lo script in modo che si usi il RigidBody2D per il movimento invece che transform.position
 
@@ -95,6 +103,8 @@ public class EnemyController : MonoBehaviour
     private void ReachExit()
     {
         // TODO: In che modo possiamo togliere la vita alla Base del giocatore senza avere un riferimento diretto?
+
+        Debug.Log("usito");
         Die();
     }
 
@@ -107,12 +117,29 @@ public class EnemyController : MonoBehaviour
 
         lifeBar.fillAmount = currentHealth / maxHealth;
 
-        if (currentHealth <= 0f) Die();
+        if (currentHealth <= 0f) 
+        {
+            GameManager.Instance.AddCoins(valueCoin);
+            Die();
+        }
     }
 
     private void Die()
     {
         // TODO: Si potrebbe fare di meglio? Come possiamo non eliminare l'oggetto e usarlo in un altro modo?
-        Destroy(gameObject);
+        //Destroy(gameObject);
+        onDestroyTrigger?.Invoke();
+        gameObject.SetActive(false);
+    }
+
+    public GameObject GetGameObject()
+    {
+        return gameObject;
+    }
+    public virtual void Initialize(EnemyCapsule _EnemyData)
+    {
+        this.enemyData = _EnemyData;
+        pathPoints = GameManager.Instance.GetPathList();
+        currentPointIndex = 0;
     }
 }

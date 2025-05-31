@@ -1,4 +1,6 @@
 using DesignPatterns.Generics;
+using NUnit.Framework.Interfaces;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class GameManager : Singleton<GameManager>
@@ -7,12 +9,19 @@ public class GameManager : Singleton<GameManager>
     [SerializeField] private int startingCoins = 100;
     private int currentCoins;
 
+    [Header("Enemy Vars")]
+    public IFactory entitiesFactory { get; private set; }
+    public Transform enemySpawnTransform;
+    public Path enemyPath;
+
     public int CurrentCoins => currentCoins;
 
     public override void Awake()
     {
         base.Awake();
         currentCoins = startingCoins;
+
+        entitiesFactory = new Factory();
     }
 
     public void AddCoins(int amount)
@@ -40,5 +49,23 @@ public class GameManager : Singleton<GameManager>
             // TODO: Aggiungere un evento qui per aggiornare l'UI
             return false;
         }
+    }
+    public void SpawnEnemy(EnemyCapsule _enemyCapsule)
+    {
+        entitiesFactory.Create(_enemyCapsule, enemySpawnTransform.position, Quaternion.identity);
+    }
+    public void SpawnTurret(TurretCapsule _turretCapsule, Vector3 _position, Quaternion _rotation)
+    {
+        entitiesFactory.Create(_turretCapsule, _position, _rotation);
+    }
+    public List<Transform> GetPathList()
+    {
+        return enemyPath.pathPoints;
+    }
+
+    public void SellCurrentTurret()
+    {
+        Debug.Log("venduto5");
+        Publisher.Publish(new SellTurretMessage());
     }
 }

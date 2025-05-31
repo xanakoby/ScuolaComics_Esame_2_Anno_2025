@@ -1,15 +1,32 @@
-﻿using System;
+﻿using DesignPatterns.Generics;
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
-public class UIManager : MonoBehaviour
+public class UIManager : Singleton<UIManager>, ISubscriber
 {
     [Header("Turret Buttons")]
     public List<TurretButton> turretButtons;
     [SerializeField] TextMeshProUGUI playerCoins;
 
-    private void Start()
+    [Header("Turret Panel")]
+    [SerializeField] GameObject turretPanel;
+    [SerializeField] TextMeshProUGUI turretInfo;
+    [SerializeField] Button upgradeTurret;
+    [SerializeField] Button sellTurret;
+
+    public override void Awake()
+    {
+        base.Awake();
+
+        UnshowTurretStats();
+
+        Publisher.Subscribe(this, typeof(TurretInfoMessage));
+    }
+
+        private void Start()
     {
         UpdateTurretButtons();
     }
@@ -35,5 +52,44 @@ public class UIManager : MonoBehaviour
         {
             button.UpdateButtonState(playerCoins);
         }
+    }
+
+    //mi mostro trammite un messaggio
+    public void ShowTurretStats()
+    {
+        turretPanel.SetActive(true);
+    }
+    public void UnshowTurretStats()
+    {
+        turretPanel.SetActive(false);
+    }
+
+    public void OnPublish(IPublisherMessage message)
+    {
+        if (message is TurretInfoMessage _turretInfoMessage)
+        {
+            ShowTurretStats();
+
+
+            turretInfo.text = 
+                "Costo: " + _turretInfoMessage.cost.ToString() + "\n" +
+                "Danno: " +  "\n" +
+                "Fire Rate: " + _turretInfoMessage.fireRate.ToString() + "\n"+ 
+                "Livello Upgrade: "
+                ;
+        }
+        else if (message is SellTurretMessage)
+        {
+            UnshowTurretStats();
+        }
+    }
+
+    public void OnDisableSubscriber()
+    {
+        Publisher.Unsubscribe(this, typeof(TurretInfoMessage));
+    }
+    private void OnDestroy()
+    {
+        OnDisableSubscriber();
     }
 }

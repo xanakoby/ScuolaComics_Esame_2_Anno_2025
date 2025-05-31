@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
+using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class TowerGridManager : MonoBehaviour
+public class TowerGridManager : MonoBehaviour, ISubscriber
 {
     public enum CellType { Empty, Road, Tree, Tower }
 
@@ -28,6 +29,13 @@ public class TowerGridManager : MonoBehaviour
 
     private TurretButton selectedTurretButton;
 
+    private bool canPlaceTurret;
+    private bool turretHit;
+
+    [Header("Selezioni")]
+    public GameObject selectedTurret;
+    public TurretController selectedTurretController;
+
     private void OnValidate()
     {
         InitGrid();
@@ -36,6 +44,8 @@ public class TowerGridManager : MonoBehaviour
     private void Start()
     {
         InitGrid();
+
+        Publisher.Subscribe(this, typeof(SellTurretMessage));
     }
 
     private void InitGrid()
@@ -55,15 +65,50 @@ public class TowerGridManager : MonoBehaviour
 
     private void Update()
     {
-        if (selectedTurretButton == null) return;
-
-        UpdateCellHighlights();
-
-        if (Input.GetMouseButtonDown(0))
+        if (canPlaceTurret)
         {
-            Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            Vector2Int cell = WorldToCell(mouseWorldPos);
-            TryPlaceTower(cell);
+            if (selectedTurretButton == null) return;
+
+            UpdateCellHighlights();
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                Vector2Int cell = WorldToCell(mouseWorldPos);
+                TryPlaceTower(cell);
+            }
+        }
+        else
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                Debug.Log(mouseWorldPos);
+
+                if (!EventSystem.current.IsPointerOverGameObject())
+                {
+                    //faccio prima un check se colpisco un qualcosa di ui, se si return
+                    turretHit = TryCheckTower(mouseWorldPos);
+                    if (turretHit)
+                    {
+                        //torre selezionata
+                        selectedTurretController = selectedTurret.GetComponent<TurretController>();
+
+                        selectedTurretController.TurretSelected();
+                    }
+                    else
+                    {
+                        //deseleziono la torretta
+                        if (selectedTurretController != null)
+                        {
+                            selectedTurretController.TurretDeselected();
+                        }
+
+                        selectedTurret = null;
+                        selectedTurretController = null;
+                    }
+                }
+            }
         }
     }
 
@@ -114,12 +159,14 @@ public class TowerGridManager : MonoBehaviour
     public void SelectTurret(TurretButton turretButton)
     {
         selectedTurretButton = turretButton;
+        canPlaceTurret = true;
         CreateVisualGrid();
     }
 
     public void CancelTurretSelection()
     {
         selectedTurretButton = null;
+        canPlaceTurret = false;
         ClearVisualGrid();
     }
 
@@ -134,9 +181,30 @@ public class TowerGridManager : MonoBehaviour
         if (GameManager.Instance.SpendCoins(selectedTurretButton.cost))
         {
             Vector3 spawnPos = transform.position + new Vector3(cell.x * cellSize + cellSize / 2f, cell.y * cellSize + cellSize / 2f);
+
+            //tolgo instantiate e piazzo la torre col pooler
+            //GameManager.Instance.SpawnTurret(selectedTurretButton.turretPrefab, spawnPos, Quaternion.identity);
             Instantiate(selectedTurretButton.TurretPrefab, spawnPos, Quaternion.identity, towerParent);
+
             grid[cell.x, cell.y] = CellType.Tower;
         }
+    }
+
+    private bool TryCheckTower(Vector2 _mousePoint)
+    {
+        //eventualmente da modificare con un boxoverlap nella cella cliccata
+        RaycastHit2D hit = Physics2D.Raycast(_mousePoint, _mousePoint, Mathf.Infinity);
+        if (hit.collider == null)
+            return false;
+
+        TurretController turretController = hit.collider.transform.gameObject.GetComponent<TurretController>();
+        if (turretController != null)
+        {
+            selectedTurret = hit.collider.gameObject;
+            return true;
+        }
+        else
+            return false;
     }
 
     private bool InBounds(Vector2Int c) =>
@@ -169,6 +237,16 @@ public class TowerGridManager : MonoBehaviour
         OnValidate();
     }
 
+    public void SellSelectedTower()
+    {
+        Debug.Log("venduto3");
+        if (selectedTurretController != null)
+        {
+            Debug.Log("venduto2");
+            selectedTurretController.SellTurret();
+        }
+    }
+
     private void OnDrawGizmos()
     {
         if (grid == null) InitGrid();
@@ -186,5 +264,22 @@ public class TowerGridManager : MonoBehaviour
                 }
                 Gizmos.DrawWireCube(cellCenter, Vector3.one * (cellSize * 0.9f));
             }
+    }
+
+    public void OnPublish(IPublisherMessage message)
+    {
+        if (message is SellTurretMessage _turretInfoMessage)
+        {
+            SellSelectedTower();
+        }
+    }
+
+    public void OnDisableSubscriber()
+    {
+        Publisher.Unsubscribe(this, typeof(TurretInfoMessage));
+    }
+    private void OnDestroy()
+    {
+        OnDisableSubscriber();
     }
 }

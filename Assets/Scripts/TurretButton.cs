@@ -7,6 +7,7 @@ public class TurretButton : MonoBehaviour
     public int cost = 50; // Costo della torretta
     private Button button;
     public GameObject TurretPrefab;
+    public TurretCapsule turretPrefab;
 
     private void Awake()
     {

@@ -1,8 +1,15 @@
 using System.Linq;
 using UnityEngine;
 
-public class TurretController : MonoBehaviour
+public class TurretController : MonoBehaviour, ISpawnable
 {
+    public delegate void OnDestroy();
+    public OnDestroy onDestroyTrigger;
+    protected TurretCapsule turretData;
+
+    [Header("Vars")]
+    [SerializeField] int cost = 50;
+
     [Header("Targeting")]
     [SerializeField] float range = 5f;
     [SerializeField] float fireRate = 1f;
@@ -10,9 +17,13 @@ public class TurretController : MonoBehaviour
     private float fireCooldown = 0f;
 
     [Header("References")]
+    [SerializeField] Transform cannonRotateTransform;
     [SerializeField] Transform cannonGraphics;
+    [SerializeField] Transform cannonRangeGraphics;
     [SerializeField] Transform firePoint;
     [SerializeField] GameObject projectilePrefab;
+
+    ObjectPooler<BaseProjectile> projectilesPooler;
 
     private void Update()
     {
@@ -31,10 +42,10 @@ public class TurretController : MonoBehaviour
             .OrderBy(t => Vector2.Distance(transform.position, t.position))
             .First();
 
-        Vector2 dir = (target.position - cannonGraphics.position).normalized;
+        Vector2 dir = (target.position - cannonRotateTransform.position).normalized;
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
 
-        cannonGraphics.rotation = Quaternion.Euler(0f, 0f, angle);
+        cannonRotateTransform.rotation = Quaternion.Euler(0f, 0f, angle);
 
         if (fireCooldown <= 0f)
         {
@@ -52,11 +63,68 @@ public class TurretController : MonoBehaviour
 
         // TODO: Bisogna gestire la distruzione del proiettile in modo intelligente ed estendibile
         // si potrebbe usare una callback onDestroyProjectile ??
+
+        //da pensarci
+        /*
+        BulletTest spawnedBullet = itemPooler.Get();
+
+        if (!spawnedBullet.gameObject.activeSelf)
+        {
+            spawnedBullet.gameObject.SetActive(true);
+        }
+        else
+        {
+            spawnedBullet.onCollisionEnter += () =>
+            {
+                itemPooler.Set(spawnedBullet);
+            };
+        }
+
+        //qui è dove setto l'oggetto dall'object pool a 0 con le cose di base
+        spawnedBullet.transform.SetPositionAndRotation(spawnTransform.position, Quaternion.identity);
+        spawnedBullet.rb.velocity = Vector3.zero;
+        */
     }
 
+    public void TurretSelected()
+    {
+        cannonGraphics.GetComponent<SpriteRenderer>().color = Color.red;
+        cannonRangeGraphics.transform.localScale = new Vector2(range, range) * 2;
+        cannonRangeGraphics.gameObject.SetActive(true);
+
+        Publisher.Publish(new TurretInfoMessage(fireRate, cost));
+    }
+    public void TurretDeselected()
+    {
+        cannonGraphics.GetComponent<SpriteRenderer>().color = Color.white;
+        cannonRangeGraphics.gameObject.SetActive(false);
+        UIManager.Instance.UnshowTurretStats();
+    }
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(transform.position, range);
+    }
+    public void DestroySellTurret()
+    {
+        onDestroyTrigger?.Invoke();
+        gameObject.SetActive(false);
+    }
+    public GameObject GetGameObject()
+    {
+        return gameObject;
+    }
+    public virtual void Initialize(TurretCapsule _turretData)
+    {
+        this.turretData = _turretData;
+        //lo inizializzo a 0
+    }
+    public void SellTurret()
+    {
+        Debug.Log("venduto1");
+        GameManager.Instance.AddCoins(cost);
+        //e faccio il set dell'object pooler e lo setto false
+        onDestroyTrigger?.Invoke();
+        gameObject.SetActive(false);
     }
 }
