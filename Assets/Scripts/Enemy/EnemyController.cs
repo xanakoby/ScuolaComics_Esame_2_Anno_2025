@@ -148,5 +148,7 @@ public class EnemyController : MonoBehaviour, ISpawnable
         this.enemyData = _EnemyData;
         pathPoints = GameManager.Instance.GetPathList();
         currentPointIndex = 0;
+        currentHealth = maxHealth;
+        canvasLife.SetActive(false);
     }
 }

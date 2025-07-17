@@ -364,6 +364,7 @@ MonoBehaviour:
   lifeBar: {fileID: 7582208534628997901}
   damageToPlayer: 1
   graphicsObject: {fileID: 5805891205820385228}
+  valueCoin: 20
 --- !u!50 &1799816837422851489
 Rigidbody2D:
   serializedVersion: 5

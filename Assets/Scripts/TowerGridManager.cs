@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -91,6 +90,13 @@ public class TowerGridManager : MonoBehaviour, ISubscriber
                     turretHit = TryCheckTower(mouseWorldPos);
                     if (turretHit)
                     {
+                        //prima la deseleziono e poi
+                        if (selectedTurretController != null)
+                        {
+                            selectedTurretController.TurretDeselected();
+                            selectedTurretController = null;
+                        }
+
                         //torre selezionata
                         selectedTurretController = selectedTurret.GetComponent<TurretController>();
 
@@ -242,6 +248,12 @@ public class TowerGridManager : MonoBehaviour, ISubscriber
         Debug.Log("venduto3");
         if (selectedTurretController != null)
         {
+            Vector2Int cellPoint = WorldToCell(selectedTurret.transform.position);
+            if (InBounds(cellPoint))
+            {
+                grid[cellPoint.x, cellPoint.y] = CellType.Empty;
+            }
+
             Debug.Log("venduto2");
             selectedTurretController.SellTurret();
         }

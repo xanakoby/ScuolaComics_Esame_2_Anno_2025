@@ -26,6 +26,7 @@ public class Level1State : State
     {
         UIManager.Instance.startGame.onClick.RemoveListener(StartGame);
         _owner.StopCoroutine(startGame);
+        GameManager.Instance.allEnemyKilled = false;
     }
 
     public override void OnFixedUpdate()
@@ -54,9 +55,10 @@ public class Level1State : State
 
     public override void OnUpdate()
     {
-        if (allEnemyDead)
+        if (GameManager.Instance.allEnemyKilled)
         {
-            LevelManager.Instance.ChangeScene("GameScene2");
+            //LevelManager.Instance.ChangeScene("GameScene2");
+            _owner.SetState(ELevel.Level2);
         }
     }
 
